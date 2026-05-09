@@ -1,9 +1,9 @@
 // Copyright 2020 GHA Test Team
-#include "textgen.h"
 #include <gtest/gtest.h>
 #include <set>
 #include <sstream>
 #include <string>
+#include "textgen.h"
 
 TEST(MarkovTest, PrefixInitSize) {
     Prefix p(NPREF, NONWORD);
@@ -134,7 +134,7 @@ TEST(MarkovTest, GenerateZeroWords) {
 
 TEST(MarkovTest, BuildLargeInput) {
     TextGen tg;
-    std::istringstream in("a b c d e f g h i j k l m n o p q r s t u v w x y z");
+    std::istringstream in("a b c d e f g h i j k l m n o p");
     tg.build(in);
     EXPECT_GT(static_cast<int>(tg.statetab.size()), 5);
 }
