@@ -1,5 +1,5 @@
 // Copyright 2026 b83
-#include "textgen.h"
+#include "main.h"
 #include <fstream>
 #include <iostream>
 

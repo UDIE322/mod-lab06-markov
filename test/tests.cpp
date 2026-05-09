@@ -1,10 +1,9 @@
-// Copyright 2021 GHA Test Team
-#include <gtest/gtest.h>
 // Copyright 2020 GHA Test Team
 #include <gtest/gtest.h>
 #include "textgen.h"
 #include <sstream>
 #include <set>
+#include <string>
 
 // 1: префикс правильного размера после инициализации
 TEST(MarkovTest, PrefixInitSize) {
