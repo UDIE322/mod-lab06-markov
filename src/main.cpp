@@ -1,7 +1,8 @@
 // Copyright 2026 b83
-#include "textgen.h"
 #include <fstream>
 #include <iostream>
+#include "textgen.h"
+
 
 int main() {
     std::ifstream in("input.txt");
