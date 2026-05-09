@@ -1,52 +1,47 @@
 // Copyright 2020 GHA Test Team
-#include <gtest/gtest.h>
 #include "textgen.h"
-#include <sstream>
+#include <gtest/gtest.h>
 #include <set>
+#include <sstream>
 #include <string>
 
-// 1: префикс правильного размера после инициализации
 TEST(MarkovTest, PrefixInitSize) {
     Prefix p(NPREF, NONWORD);
-    ASSERT_EQ((int)p.size(), NPREF);
+    ASSERT_EQ(static_cast<int>(p.size()), NPREF);
 }
 
-// 2: после add префикс сдвигается
 TEST(MarkovTest, PrefixShiftsAfterAdd) {
     TextGen tg;
-    Prefix p = { "один", "два" };
-    tg.add(p, "три");
-    EXPECT_EQ(p[0], "два");
-    EXPECT_EQ(p[1], "три");
+    Prefix p = { "one", "two" };
+    tg.add(p, "three");
+    EXPECT_EQ(p[0], "two");
+    EXPECT_EQ(p[1], "three");
 }
 
-// 3:суффикс записывается в таблицу
 TEST(MarkovTest, SuffixStoredInTable) {
     TextGen tg;
-    Prefix p = { "жил", "был" };
-    tg.add(p, "царь");
-    Prefix key = { "жил", "был" };
+    Prefix p = { "lived", "was" };
+    tg.add(p, "king");
+    Prefix key = { "lived", "was" };
     ASSERT_FALSE(tg.statetab[key].empty());
-    EXPECT_EQ(tg.statetab[key][0], "царь");
+    EXPECT_EQ(tg.statetab[key][0], "king");
 }
 
-// 4: несколько суффиксов для одного префикса накапливаются
 TEST(MarkovTest, MultiSuffixAccumulates) {
     TextGen tg;
-    Prefix p = { "море", "синее" };
-    tg.add(p, "шумит");
-    Prefix p2 = { "море", "синее" };
-    tg.add(p2, "плещет");
-    Prefix p3 = { "море", "синее" };
-    tg.add(p3, "бурлит");
-    Prefix key = { "море", "синее" };
-    EXPECT_EQ((int)tg.statetab[key].size(), 3);
+    Prefix p = { "sea", "blue" };
+    tg.add(p, "roars");
+    Prefix p2 = { "sea", "blue" };
+    tg.add(p2, "splashes");
+    Prefix p3 = { "sea", "blue" };
+    tg.add(p3, "flows");
+    Prefix key = { "sea", "blue" };
+    EXPECT_EQ(static_cast<int>(tg.statetab[key].size()), 3);
 }
 
-// 5: единственный суффикс всегда выбирается одинаково
 TEST(MarkovTest, SingleSuffixAlwaysChosen) {
     TextGen tg;
-    std::istringstream in("а б в");
+    std::istringstream in("a b c");
     tg.build(in);
     std::ostringstream out1, out2, out3;
     tg.generate(out1, 10);
@@ -56,28 +51,25 @@ TEST(MarkovTest, SingleSuffixAlwaysChosen) {
     EXPECT_EQ(out2.str(), out3.str());
 }
 
-// 6: build заполняет таблицу из потока
 TEST(MarkovTest, BuildFillsTableFromStream) {
     TextGen tg;
-    std::istringstream in("у лукоморья дуб зеленый златая цепь на дубе том");
+    std::istringstream in("the cat sat on the mat");
     tg.build(in);
-    EXPECT_GT((int)tg.statetab.size(), 0);
+    EXPECT_GT(static_cast<int>(tg.statetab.size()), 0);
 }
 
-// 7:build на пустом потоке — только NONWORD записи
 TEST(MarkovTest, BuildEmptyStream) {
     TextGen tg;
     std::istringstream in("");
     tg.build(in);
     for (auto& entry : tg.statetab)
         for (auto& s : entry.second)
-            EXPECT_EQ(s, NONWORD);
+            EXPECT_EQ(s, std::string(NONWORD));
 }
 
-// 8: генерация не превышает заданный лимит слов
 TEST(MarkovTest, GenerateRespectsMaxWords) {
     TextGen tg;
-    std::istringstream in("раз два три четыре пять шесть семь восемь девять десять");
+    std::istringstream in("one two three four five six seven eight nine ten");
     tg.build(in);
     std::ostringstream out;
     tg.generate(out, 4);
@@ -88,53 +80,48 @@ TEST(MarkovTest, GenerateRespectsMaxWords) {
     EXPECT_LE(cnt, 4);
 }
 
-// 9: генерация выдаёт непустой результат
 TEST(MarkovTest, GenerateNotEmpty) {
     TextGen tg;
-    std::istringstream in("у лукоморья дуб зеленый златая цепь на дубе том");
+    std::istringstream in("the cat sat on the mat by the door");
     tg.build(in);
     std::ostringstream out;
     tg.generate(out, 5);
     EXPECT_FALSE(out.str().empty());
 }
 
-// 10: сгенерированный текст содержит только слова из исходника
 TEST(MarkovTest, GenerateOnlyKnownWords) {
     TextGen tg;
-    std::istringstream in("кот ученый свои сказки говорил");
+    std::istringstream in("cat learned his tales told");
     tg.build(in);
     std::ostringstream out;
     tg.generate(out, 20);
-    std::set<std::string> known = { "кот", "ученый", "свои", "сказки", "говорил" };
+    std::set<std::string> known = { "cat", "learned", "his", "tales", "told" };
     std::istringstream res(out.str());
     std::string w;
     while (res >> w)
-        EXPECT_TRUE(known.count(w) > 0) << "Неизвестное слово: " << w;
+        EXPECT_TRUE(known.count(w) > 0) << "Unknown word: " << w;
 }
 
-// 11: два вызова add с одним префиксом дают два суффикса
 TEST(MarkovTest, TwoAddsGiveTwoSuffixes) {
     TextGen tg;
-    Prefix p1 = { "белый", "снег" };
-    tg.add(p1, "падает");
-    Prefix p2 = { "белый", "снег" };
-    tg.add(p2, "кружится");
-    Prefix key = { "белый", "снег" };
-    EXPECT_EQ((int)tg.statetab[key].size(), 2);
+    Prefix p1 = { "white", "snow" };
+    tg.add(p1, "falls");
+    Prefix p2 = { "white", "snow" };
+    tg.add(p2, "spins");
+    Prefix key = { "white", "snow" };
+    EXPECT_EQ(static_cast<int>(tg.statetab[key].size()), 2);
 }
 
-// 12: после build разные префиксы дают разные записи
 TEST(MarkovTest, DifferentPrefixesDifferentEntries) {
     TextGen tg;
-    std::istringstream in("ветер север холод зима мороз лед");
+    std::istringstream in("wind north cold winter frost ice");
     tg.build(in);
-    EXPECT_GT((int)tg.statetab.size(), 1);
+    EXPECT_GT(static_cast<int>(tg.statetab.size()), 1);
 }
 
-// 13: генерация с лимитом 0 даёт пустую строку
 TEST(MarkovTest, GenerateZeroWords) {
     TextGen tg;
-    std::istringstream in("раз два три четыре пять");
+    std::istringstream in("one two three four five");
     tg.build(in);
     std::ostringstream out;
     tg.generate(out, 0);
@@ -145,22 +132,20 @@ TEST(MarkovTest, GenerateZeroWords) {
     EXPECT_EQ(cnt, 0);
 }
 
-// 14: build на длинном тексте создаёт большую таблицу
 TEST(MarkovTest, BuildLargeInput) {
     TextGen tg;
-    std::istringstream in("а б в г д е ж з и к л м н о п р с т у ф х ц ч ш щ");
+    std::istringstream in("a b c d e f g h i j k l m n o p q r s t u v w x y z");
     tg.build(in);
-    EXPECT_GT((int)tg.statetab.size(), 5);
+    EXPECT_GT(static_cast<int>(tg.statetab.size()), 5);
 }
 
-// 15:суфикс NONWORD добавляется в конец таблицы при build
 TEST(MarkovTest, BuildAddsNonwordAtEnd) {
     TextGen tg;
-    std::istringstream in("один два три");
+    std::istringstream in("one two three");
     tg.build(in);
     bool found = false;
     for (auto& entry : tg.statetab)
         for (auto& s : entry.second)
-            if (s == NONWORD) found = true;
+            if (s == std::string(NONWORD)) found = true;
     EXPECT_TRUE(found);
 }
