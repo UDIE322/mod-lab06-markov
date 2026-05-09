@@ -12,7 +12,7 @@ const char NONWORD[] = "\n";
 typedef std::deque<std::string> Prefix;
 
 class TextGen {
-    public: 
+     public:
     std::map<Prefix, std::vector<std::string>> statetab;
     void add(Prefix& pref, const std::string& word);
     void build(std::istream& in);
