@@ -1,3 +1,4 @@
+// Copyright 2026 b83
 #include "textgen.h"
 #include <fstream>
 #include <iostream>
@@ -13,8 +14,13 @@ int main() {
     gen.build(in);
 
     std::ofstream out("result/gen.txt");
-    gen.generate(out);
+    if (!out) {
+        std::cerr << "Cannot open result/gen.txt for writing" << std::endl;
+        return 1;
+    }
 
+    gen.generate(out);
     std::cout << "Done! See result/gen.txt" << std::endl;
+
     return 0;
 }
